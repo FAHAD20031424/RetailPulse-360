@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>لوحة مبيعات TechMart</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--bg:#f2f4f3;--card:#fff;--text:#16211f;--muted:#5d6b68;--line:#d9dfdd;--accent:#0b7a6e;--accent-soft:#dff0ed;--bar:#0b7a6e;color-scheme:light;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101716;--card:#18211f;--text:#e8efed;--muted:#9bb0ab;--line:#2b3936;--accent:#3cc6b4;--accent-soft:#1d3834;--bar:#3cc6b4;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#101716;--card:#18211f;--text:#e8efed;--muted:#9bb0ab;--line:#2b3936;--accent:#3cc6b4;--accent-soft:#1d3834;--bar:#3cc6b4;color-scheme:dark}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Tajawal",system-ui,"Segoe UI",Tahoma,sans-serif;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 40px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:14px;margin-bottom:18px}
+h1{margin:0;font-size:1.7rem;font-weight:800;letter-spacing:0}
+.sub{color:var(--muted);margin:2px 0 0;font-size:.95rem}
+.filters{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+select,button,input{font:inherit;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:40px}
+button{cursor:pointer;font-weight:500}
+button:hover{border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:14px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:14px 16px;border-inline-start:4px solid var(--accent)}
+.kpi span{display:block;color:var(--muted);font-size:.9rem}
+.kpi b{font-size:1.9rem;font-weight:800;font-variant-numeric:tabular-nums}
+.kpi small{color:var(--muted);font-size:.85rem;font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:12px;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card h2{font-size:1.05rem;margin:0 0 2px;font-weight:700}
+.card p{margin:0 0 8px;color:var(--muted);font-size:.85rem}
+.ch{position:relative;height:250px}
+.tools{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem;min-width:640px}
+th,td{text-align:start;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{cursor:pointer;color:var(--muted);font-weight:700;user-select:none}
+th:hover{color:var(--accent)}
+td.n{font-variant-numeric:tabular-nums}
+.pager{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:.9rem}
+.tag{background:var(--accent-soft);color:var(--accent);border-radius:20px;padding:1px 9px;font-size:.8rem;font-weight:500}
+.insight{background:var(--accent-soft);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:.95rem}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-bottom:14px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.filters input[type=search]{min-width:200px}
+.filters input[type=date]{max-width:150px}
+.dl{display:block;font-style:normal;font-size:.82rem;font-weight:500;color:var(--muted)}
+.dl.up{color:#2e9e5b}.dl.dn{color:#d9534f}
+td.w{white-space:normal;min-width:200px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>لوحة مبيعات TechMart</h1><p class="sub">مبيعات 2026 وتصنيف العملاء حسب RFM. انقر على أي عمود في الرسوم لتصفية البيانات.</p></div>
+  <div class="filters">
+    <select id="fCity" aria-label="المدينة"></select>
+    <select id="fCat" aria-label="فئة المنتج"></select>
+    <input id="fQ" type="search" placeholder="بحث: عميل، منتج، رقم طلب" aria-label="بحث">
+    <input id="fFrom" type="date" aria-label="من تاريخ" min="2026-01-01" max="2026-12-31">
+    <input id="fTo" type="date" aria-label="إلى تاريخ" min="2026-01-01" max="2026-12-31">
+    <button id="reset" type="button">إعادة ضبط الفلاتر</button>
+  </div>
+</header>
+
+<div class="insight" id="insight"></div>
+<section class="kpis">
+  <div class="kpi"><span>إجمالي المبيعات</span><b id="kSales">0</b> <small>ريال</small><i class="dl" id="dSales"></i></div>
+  <div class="kpi"><span>عدد الطلبات</span><b id="kOrders">0</b><i class="dl" id="dOrders"></i></div>
+  <div class="kpi"><span>متوسط قيمة الطلب</span><b id="kAvg">0</b> <small>ريال</small><i class="dl" id="dAvg"></i></div>
+  <div class="kpi"><span>عدد العملاء النشطين</span><b id="kCust">0</b></div>
+</section>
+
+<section class="grid">
+  <div class="card"><h2>المبيعات حسب الفئة</h2><p>بالريال</p><div class="ch"><canvas id="cCat"></canvas></div></div>
+  <div class="card"><h2>المبيعات حسب المدينة</h2><p>بالريال</p><div class="ch"><canvas id="cCity"></canvas></div></div>
+  <div class="card"><h2>شرائح العملاء (RFM)</h2><p>حداثة الشراء، تكراره، وقيمته</p><div class="ch"><canvas id="cRfm"></canvas></div></div>
+</section>
+
+<section class="grid2">
+  <div class="card"><h2>اتجاه المبيعات الشهري</h2><p>بالريال</p><div class="ch"><canvas id="cTrend"></canvas></div></div>
+  <div class="card"><h2>أعلى 5 عملاء</h2><p>حسب إجمالي الإنفاق (ريال)</p><div class="scroll"><table style="min-width:0"><tbody id="top"></tbody></table></div></div>
+</section>
+
+<section class="grid2">
+  <div class="card"><h2>شرائح العملاء وتوصيات التسويق</h2><p>تقييم الحداثة R والتكرار F والقيمة M من 1 إلى 5 (خُمسيات)</p><div class="scroll"><table><thead><tr><th>الشريحة</th><th>القاعدة</th><th>العملاء</th><th>متوسط الإنفاق</th><th>التوصية</th></tr></thead><tbody id="segBody"></tbody></table></div></div>
+  <div class="card"><h2>جودة البيانات</h2><p>من البيانات الخام إلى النظيفة</p><table style="min-width:0"><tbody id="dq"></tbody></table></div>
+</section>
+
+<section class="card">
+  <div class="tools"><h2 style="margin:0">تفاصيل الطلبات <span class="tag" id="cnt"></span></h2>
+    <div class="pager"><button id="exp" type="button">تصدير CSV</button><button id="prev" type="button">السابق</button><span id="pg"></span><button id="next" type="button">التالي</button></div></div>
+  <div class="scroll"><table><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+</section>
+</div>
+
+<script>
+// ---------- بيانات مدمجة (تُولَّد بخوارزمية ثابتة، فتتطابق في كل مرة) ----------
+let seed = 2026;
+const rnd = () => (seed = (seed * 1664525 + 1013904223) % 4294967296) / 4294967296;
+const pickW = (arr, w) => { let r = rnd() * w.reduce((a, b) => a + b), i = 0; while ((r -= w[i]) > 0) i++; return arr[i]; };
+
+const cities = ["الرياض", "جدة", "الدمام", "مكة", "المدينة", "تبوك"];
+const cityW = [.29, .22, .16, .13, .12, .08];
+const catalog = {
+  "إلكترونيات": [["سماعات", 280], ["ساعة ذكية", 640], ["شاحن متنقل", 130], ["لوحة مفاتيح", 220]],
+  "ملابس": [["قميص", 90], ["جينز", 190], ["جاكيت", 380], ["حذاء رياضي", 310]],
+  "المنزل": [["مصباح", 120], ["خلاط", 210], ["طقم مفارش", 260], ["ماكينة قهوة", 350]],
+  "الجمال": [["عطر", 330], ["مجموعة عناية", 180], ["مجفف شعر", 240]]
+};
+const catNames = Object.keys(catalog), catW = [.34, .28, .22, .16];
+
+const customers = Array.from({ length: 150 }, (_, i) => ({ id: "C" + String(i + 1).padStart(3, "0"), city: pickW(cities, cityW) }));
+const start = Date.UTC(2026, 0, 1), DAY = 864e5;
+let orders = [];
+for (let i = 0; i < 1100; i++) {
+  const c = customers[Math.floor(Math.pow(rnd(), 1.7) * customers.length)]; // بعض العملاء أنشط من غيرهم
+  const cat = pickW(catNames, catW), [prod, price] = catalog[cat][Math.floor(rnd() * catalog[cat].length)];
+  const qty = 1 + Math.floor(rnd() * rnd() * 4);
+  const t = start + Math.floor(Math.pow(rnd(), 0.65) * 320) * DAY; // مبيعات أكثر في الأشهر الأخيرة
+  orders.push({ id: 5000 + i, t, date: new Date(t).toISOString().slice(0, 10), cid: c.id, city: c.city, cat, prod, qty, amt: price * qty, p: price });
+}
+
+// ---------- محاكاة بيانات خام ثم تنظيفها ----------
+const raw = orders.map(o => ({ ...o })), ix = () => Math.floor(rnd() * raw.length);
+const QR = { dup: 0, miss: 0, fmt: 0, out: 0 };
+const med = orders.map(o => o.qty).sort((a, b) => a - b)[orders.length >> 1];
+for (let i = 0; i < 30; i++) raw[ix()].city = null;                                   // مدن ناقصة
+for (let i = 0; i < 40; i++) { const o = raw[ix()]; if (o.city) o.city = "  " + o.city + " "; } // مسافات زائدة
+for (let i = 0; i < 8; i++) raw[ix()].qty = 99;                                       // كميات شاذة
+for (let i = 0; i < 25; i++) raw.push({ ...raw[ix()] });                              // صفوف مكررة
+const seen = new Set(), custCity = Object.fromEntries(customers.map(c => [c.id, c.city])), cleaned = [];
+raw.forEach(o => {
+  if (seen.has(o.id)) { QR.dup++; return; }
+  seen.add(o.id);
+  const r = { ...o };
+  if (!r.city) { r.city = custCity[r.cid]; QR.miss++; } else if (r.city !== r.city.trim()) { r.city = r.city.trim(); QR.fmt++; }
+  if (r.qty > 10) { r.qty = med; r.amt = r.p * r.qty; QR.out++; }
+  cleaned.push(r);
+});
+orders = cleaned;
+
+// ---------- الحالة والفلاتر ----------
+const S = { city: "", cat: "", q: "", from: "", to: "", key: "t", dir: -1, page: 0 }, PER = 10;
+const $ = id => document.getElementById(id), fmt = n => Math.round(n).toLocaleString("en-US");
+const opts = (el, all, list) => el.innerHTML = `<option value="">${all}</option>` + list.map(x => `<option>${x}</option>`).join("");
+opts($("fCity"), "كل المدن", cities); opts($("fCat"), "كل الفئات", catNames);
+const subset = () => { const q = S.q.toLowerCase(); return orders.filter(o => (!S.city || o.city === S.city) && (!S.cat || o.cat === S.cat) && (!S.from || o.date >= S.from) && (!S.to || o.date <= S.to) && (!q || (o.cid + o.prod + o.id + o.city + o.cat).toLowerCase().includes(q))); };
+
+// ---------- تحليل RFM ----------
+const SEG = ["أبطال", "أوفياء", "جدد", "معرّضون للفقد", "نائمون"];
+const SEGINFO = [["R≥4 وF≥4 وM≥3", "كافئهم ببرنامج ولاء، وأطلق منتجاتك الجديدة لهم أولاً"], ["R≥3 وF≥3", "اعرض عليهم ترقية المنتج وتجميع النقاط"], ["R≥4", "أرسل ترحيباً وعرضاً على الطلب الثاني"], ["R≤2 وF≥3", "حملة استرجاع بخصم محدود المدة"], ["غير ذلك", "رسائل تذكير منخفضة التكلفة، ولا تنفق عليهم إعلانات مدفوعة"]];
+function rfm(data) {
+  const ref = (data.length ? Math.max(...data.map(o => o.t)) : 0) + DAY, m = new Map();
+  data.forEach(o => { const c = m.get(o.cid) || { id: o.cid, last: 0, f: 0, m: 0 }; c.last = Math.max(c.last, o.t); c.f++; c.m += o.amt; m.set(o.cid, c); });
+  const cs = [...m.values()]; cs.forEach(c => c.r = (ref - c.last) / DAY);
+  const score = (k, inv) => [...cs].sort((a, b) => inv ? b[k] - a[k] : a[k] - b[k]).forEach((c, i) => { c[k + "s"] = 1 + Math.floor(i / cs.length * 5); });
+  score("r", true); score("f", false); score("m", false);
+  const counts = SEG.map(() => 0);
+  cs.forEach(c => { c.seg = c.rs >= 4 && c.fs >= 4 && c.ms >= 3 ? 0 : c.rs >= 3 && c.fs >= 3 ? 1 : c.rs >= 4 ? 2 : c.rs <= 2 && c.fs >= 3 ? 3 : 4; counts[c.seg]++; });
+  return { counts, n: cs.length, cs };
+}
+
+// ---------- الرسوم ----------
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const segColors = ["#0b7a6e", "#4aa3df", "#e0a526", "#d9643a", "#8a94a0"];
+function theme() { Chart.defaults.color = css("--muted"); Chart.defaults.borderColor = css("--line"); Chart.defaults.font.family = '"Tajawal",system-ui,sans-serif'; }
+theme();
+const toggle = (k, chart) => (e, els) => { if (!els.length) return; const v = chart.data.labels[els[0].index]; S[k] = S[k] === v ? "" : v; $(k === "city" ? "fCity" : "fCat").value = S[k]; S.page = 0; render(); };
+const barOpts = (k, horiz) => ({ responsive: true, maintainAspectRatio: false, indexAxis: horiz ? "y" : "x", plugins: { legend: { display: false }, tooltip: { rtl: true, callbacks: { label: c => " " + fmt(c.parsed[horiz ? "x" : "y"]) + " ريال" } } }, scales: { x: { ticks: { callback: function (v) { return horiz ? fmt(v) : this.getLabelForValue(v); } } }, y: { ticks: { callback: function (v) { return horiz ? this.getLabelForValue(v) : fmt(v); } } } } });
+const mk = (id, cfg) => new Chart($(id), cfg);
+const cCat = mk("cCat", { type: "bar", data: { labels: catNames, datasets: [{ data: [], borderRadius: 4 }] }, options: barOpts("cat", false) });
+const cCity = mk("cCity", { type: "bar", data: { labels: cities, datasets: [{ data: [], borderRadius: 4 }] }, options: barOpts("city", true) });
+const cRfm = mk("cRfm", { type: "doughnut", data: { labels: SEG, datasets: [{ data: [], backgroundColor: segColors, borderWidth: 0 }] },
+  options: { responsive: true, maintainAspectRatio: false, cutout: "58%", plugins: { legend: { position: "bottom", rtl: true, labels: { boxWidth: 12 } }, tooltip: { rtl: true, callbacks: { label: c => ` ${c.label}: ${c.parsed} عميل` } } } } });
+cCat.options.onClick = toggle("cat", cCat); cCity.options.onClick = toggle("city", cCity);
+const MONTHS = ["يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر"];
+const cTrend = mk("cTrend", { type: "line", data: { labels: MONTHS, datasets: [{ data: [], fill: true, tension: .3, pointRadius: 3 }] },
+  options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { rtl: true, callbacks: { label: c => " " + fmt(c.parsed.y) + " ريال" } } }, scales: { y: { beginAtZero: true, ticks: { callback: v => fmt(v) } } } } });
+
+// ---------- الجدول ----------
+const COLS = [["id", "رقم الطلب"], ["date", "التاريخ"], ["cid", "العميل"], ["city", "المدينة"], ["cat", "الفئة"], ["prod", "المنتج"], ["qty", "الكمية"], ["amt", "المبلغ (ريال)"]];
+$("thead").innerHTML = COLS.map(([k, l]) => `<th data-k="${k === "date" ? "t" : k}">${l}</th>`).join("");
+$("thead").onclick = e => { const k = e.target.dataset.k; if (!k) return; S.dir = S.key === k ? -S.dir : 1; S.key = k; render(); };
+$("prev").onclick = () => { S.page--; render(); };
+$("next").onclick = () => { S.page++; render(); };
+$("fCity").onchange = e => { S.city = e.target.value; S.page = 0; render(); };
+$("fCat").onchange = e => { S.cat = e.target.value; S.page = 0; render(); };
+$("reset").onclick = () => { Object.assign(S, { city: "", cat: "", q: "", from: "", to: "", page: 0 }); ["fCity", "fCat", "fQ", "fFrom", "fTo"].forEach(id => $(id).value = ""); render(); };
+$("fQ").oninput = e => { S.q = e.target.value.trim(); S.page = 0; render(); };
+$("fFrom").onchange = e => { S.from = e.target.value; S.page = 0; render(); };
+$("exp").onclick = async () => {
+  const csv = "\ufefforder_id,order_date,customer_id,city,category,product,quantity,amount\n" + subset().map(o => [o.id, o.date, o.cid, o.city, o.cat, o.prod, o.qty, o.amt].join(",")).join("\n");
+  try { const dl = await claude.use("downloads"); if (!dl) throw 0; await dl.save({ filename: "techmart_orders.csv", data: csv }); }
+  catch (e) { if (e && e.code === "declined") return; const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "techmart_orders.csv"; a.click(); }
+};
+$("fTo").onchange = e => { S.to = e.target.value; S.page = 0; render(); };
+
+// ---------- العرض ----------
+function render() {
+  const d = subset(), total = d.reduce((a, o) => a + o.amt, 0), n = d.length;
+  const cust = new Set(d.map(o => o.cid)).size;
+  $("kSales").textContent = fmt(total); $("kOrders").textContent = fmt(n);
+  $("kAvg").textContent = n ? fmt(total / n) : "0"; $("kCust").textContent = fmt(cust);
+
+  const sumBy = (key, list) => list.map(x => d.filter(o => o[key] === x).reduce((a, o) => a + o.amt, 0));
+  const hi = (labels, sel) => labels.map(l => !sel || l === sel ? css("--bar") : css("--line"));
+  cCat.data.datasets[0].data = sumBy("cat", catNames); cCat.data.datasets[0].backgroundColor = hi(catNames, S.cat);
+  cCity.data.datasets[0].data = sumBy("city", cities); cCity.data.datasets[0].backgroundColor = hi(cities, S.city);
+  cRfm.data.datasets[0].data = rfm(d).counts;
+  cTrend.data.datasets[0].data = MONTHS.map((_, m) => d.filter(o => new Date(o.t).getUTCMonth() === m).reduce((a, o) => a + o.amt, 0));
+  Object.assign(cTrend.data.datasets[0], { borderColor: css("--accent"), backgroundColor: css("--accent-soft"), pointBackgroundColor: css("--accent") });
+  const mx = d.length ? Math.max(...d.map(o => new Date(o.t).getUTCMonth())) : 0, mc = mx - 1;
+  const agg = m => { const x = d.filter(o => new Date(o.t).getUTCMonth() === m), s = x.reduce((a, o) => a + o.amt, 0); return [s, x.length, x.length ? s / x.length : 0]; };
+  const A = mc >= 1 ? agg(mc) : null, B = mc >= 1 ? agg(mc - 1) : null;
+  const dl = (id, i) => { const el = $(id); if (!A || !B[i]) { el.textContent = "لا توجد فترة سابقة للمقارنة"; el.className = "dl"; return; } const p = (A[i] / B[i] - 1) * 100; el.textContent = `${p >= 0 ? "▲" : "▼"} ${Math.abs(p).toFixed(1)}% ${MONTHS[mc]} مقابل ${MONTHS[mc - 1]}`; el.className = "dl " + (p >= 0 ? "up" : "dn"); };
+  dl("dSales", 0); dl("dOrders", 1); dl("dAvg", 2);
+  [cCat, cCity, cRfm, cTrend].forEach(c => c.update());
+  const R = rfm(d), cv = cCat.data.datasets[0].data, ct = cCity.data.datasets[0].data;
+  $("segBody").innerHTML = SEG.map((s, i) => { const g = R.cs.filter(c => c.seg === i); return `<tr><td><span class="tag">${s}</span></td><td>${SEGINFO[i][0]}</td><td class="n">${g.length}</td><td class="n">${g.length ? fmt(g.reduce((a, c) => a + c.m, 0) / g.length) : 0}</td><td class="w">${SEGINFO[i][1]}</td></tr>`; }).join("");
+  $("dq").innerHTML = [["صفوف خام", raw.length], ["مكررة محذوفة", QR.dup], ["مدن ناقصة (ملئت من سجل العميل)", QR.miss], ["مدن بمسافات زائدة (صُحّحت)", QR.fmt], ["كميات شاذة (استُبدلت بالوسيط)", QR.out], ["صفوف نظيفة للتحليل", orders.length]].map(([l, v]) => `<tr><td class="w">${l}</td><td class="n"><b>${fmt(v)}</b></td></tr>`).join("");
+  const iC = cv.indexOf(Math.max(...cv)), iT = ct.indexOf(Math.max(...ct)), pc = v => total ? Math.round(v / total * 100) : 0;
+  $("insight").innerHTML = n ? `<b>ملخص:</b> أعلى فئة مبيعاً هي <b>${catNames[iC]}</b> (${pc(cv[iC])}% من المبيعات)، وأعلى مدينة <b>${cities[iT]}</b> (${pc(ct[iT])}%). من بين ${fmt(R.n)} عميلاً يوجد ${fmt(R.counts[0])} في شريحة "أبطال".` : "لا توجد بيانات مطابقة للفلاتر الحالية.";
+  $("top").innerHTML = [...R.cs].sort((a, b) => b.m - a.m).slice(0, 5).map(c => `<tr><td>${c.id}</td><td><span class="tag">${SEG[c.seg]}</span></td><td class="n">${fmt(c.m)}</td></tr>`).join("");
+
+  d.sort((a, b) => (a[S.key] > b[S.key] ? 1 : a[S.key] < b[S.key] ? -1 : 0) * S.dir);
+  const pages = Math.max(1, Math.ceil(n / PER)); S.page = Math.min(Math.max(S.page, 0), pages - 1);
+  $("tbody").innerHTML = d.slice(S.page * PER, S.page * PER + PER).map(o =>
+    `<tr><td class="n">${o.id}</td><td class="n">${o.date}</td><td>${o.cid}</td><td>${o.city}</td><td>${o.cat}</td><td>${o.prod}</td><td class="n">${o.qty}</td><td class="n">${fmt(o.amt)}</td></tr>`).join("")
+    || `<tr><td colspan="8">لا توجد طلبات مطابقة. غيّر الفلاتر أو أعد ضبطها.</td></tr>`;
+  $("cnt").textContent = fmt(n) + " طلب";
+  $("pg").textContent = `صفحة ${S.page + 1} من ${pages}`;
+  $("prev").disabled = S.page === 0; $("next").disabled = S.page >= pages - 1;
+}
+render();
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { theme(); render(); });
+</script>
+</body>
+</html>
